@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Scan
 from ai_engine import analyze_message
 
@@ -20,7 +21,7 @@ login_manager.login_view = "login"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ---------------- HOME (FIX FOR 404) ----------------
+# ---------------- HOME ----------------
 @app.route("/")
 def home():
     return redirect("/login")
@@ -29,12 +30,25 @@ def home():
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        existing = User.query.filter_by(username=username).first()
+
+        if existing:
+            return "Username already exists."
+
+        hashed = generate_password_hash(password)
+
         user = User(
-            username=request.form["username"],
-            password=request.form["password"]
+            username=username,
+            password=hashed
         )
+
         db.session.add(user)
         db.session.commit()
+
         return redirect("/login")
 
     return render_template("signup.html")
@@ -42,20 +56,25 @@ def signup():
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        user = User.query.filter_by(
-            username=request.form["username"],
-            password=request.form["password"]
-        ).first()
 
-        if user:
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect("/dashboard")
+
+        return "Invalid username or password."
 
     return render_template("login.html")
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
+@login_required
 def logout():
     logout_user()
     return redirect("/login")
@@ -64,10 +83,13 @@ def logout():
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
+
     result = None
 
     if request.method == "POST":
+
         msg = request.form["message"]
+
         result = analyze_message(msg)
 
         scan = Scan(
@@ -82,10 +104,15 @@ def dashboard():
 
     scans = Scan.query.filter_by(user_id=current_user.id).all()
 
-    return render_template("dashboard.html", result=result, scans=scans)
+    return render_template(
+        "dashboard.html",
+        result=result,
+        scans=scans
+    )
 
-# ---------------- RUN APP ----------------
+# ---------------- RUN ----------------
 if __name__ == "__main__":
+
     with app.app_context():
         db.create_all()
 
