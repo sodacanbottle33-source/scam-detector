@@ -1,87 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>ScamShield AI Dashboard</title>
-
-<style>
-
-body {
-    margin: 0;
-    font-family: Arial;
-    background: #313338;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-.card {
-    background: #2b2d31;
-    padding: 40px;
-    border-radius: 14px;
-    width: 520px;
-    text-align: center;
-}
-
-input, textarea {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
-    background: #1e1f22;
-    color: white;
-}
-
-button {
-    margin-top: 10px;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: #5865f2;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    width: 100%;
-}
-
-button:hover {
-    background: #4752c4;
-}
-
-#status {
-    margin-top: 10px;
-    color: #b5bac1;
-}
-
-.section {
-    margin-bottom: 20px;
-}
-
-</style>
-
-</head>
-
-<body>
-
 <div class="card">
 
     <h1>🛡 ScamShield AI</h1>
     <p>Text + Voice Scam Detector</p>
 
-    <!-- TEXT INPUT -->
+    <!-- TEXT SCAN -->
     <form method="POST">
 
         <div class="section">
 
             <h3>✍️ Text Scan</h3>
 
-            <textarea name="message" placeholder="Paste or type message..."></textarea>
+            <textarea name="message" placeholder="Type or paste message..." required></textarea>
 
             <button type="submit">Analyze Text</button>
 
@@ -89,19 +18,20 @@ button:hover {
 
     </form>
 
-    <hr style="margin:20px 0; opacity:0.2;">
+    <hr>
 
-    <!-- VOICE INPUT -->
+    <!-- VOICE SCAN -->
     <div class="section">
 
         <h3>🎤 Voice Scan</h3>
 
-        <button onclick="startRecording()">Start Mic</button>
-        <button onclick="stopRecording()">Stop</button>
+        <button onclick="startRecording()">Start Recording</button>
+        <button onclick="stopRecording()">Stop Recording</button>
 
         <p id="status">Ready</p>
 
-        <form method="POST" enctype="multipart/form-data" id="audioForm">
+        <!-- ⚡ IMPORTANT FIX: action="/dashboard" -->
+        <form method="POST" enctype="multipart/form-data" action="/dashboard">
 
             <input type="file" name="audio" id="audioInput" hidden>
 
@@ -145,7 +75,7 @@ function startRecording(){
 
             document.getElementById("audioInput").files = dataTransfer.files;
 
-            document.getElementById("status").innerText = "✅ Ready";
+            document.getElementById("status").innerText = "✅ Ready to send";
 
             audioChunks = [];
         };
@@ -156,8 +86,12 @@ function startRecording(){
 
 /* STOP MIC */
 function stopRecording(){
-    mediaRecorder.stop();
-    document.getElementById("status").innerText = "⏹ Stopped";
+
+    if(mediaRecorder){
+        mediaRecorder.stop();
+        document.getElementById("status").innerText = "⏹ Stopped";
+    }
+
 }
 
 </script>

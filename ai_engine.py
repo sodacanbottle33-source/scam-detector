@@ -1,123 +1,73 @@
 import re
-import math
 
-def analyze_message(message):
+SCAM_KEYWORDS = [
+    "urgent", "immediately", "act now", "bank", "verify",
+    "password", "login", "suspended", "gift card",
+    "bitcoin", "wiring money", "click link"
+]
 
-    text = message.lower()
-    words = text.split()
+def analyze_message(text):
+
+    text = text.lower()
 
     score = 0
     reasons = []
 
-    # =========================
-    # 🧠 SCAM ARCHETYPE SYSTEM
-    # =========================
+    # 1. keyword detection
+    for word in SCAM_KEYWORDS:
+        if word in text:
+            score += 15
+            reasons.append(f"Found scam trigger word: '{word}'")
 
-    archetypes = {
-        "money_grab": ["money", "send", "pay", "transfer", "cash", "give me"],
-        "identity_theft": ["password", "otp", "ssn", "login", "verify"],
-        "fear_attack": ["suspended", "locked", "arrest", "legal", "police"],
-        "urgency": ["now", "immediately", "urgent", "hurry", "fast"],
-        "manipulation": ["trust me", "secret", "dont tell", "confidential"]
-    }
-
-    archetype_hits = {}
-
-    for name, keywords in archetypes.items():
-        hits = sum(1 for k in keywords if k in text)
-        if hits > 0:
-            archetype_hits[name] = hits
-            score += hits * 15
-
-    # =========================
-    # 🧠 PATTERN STACKING (VERY POWERFUL)
-    # =========================
-    if len(archetype_hits) >= 2:
+    # 2. urgency detection
+    if re.search(r"now|immediately|urgent|today", text):
         score += 20
-        reasons.append("🧠 Multi-vector scam pattern detected")
+        reasons.append("High urgency language detected")
 
-    if len(archetype_hits) >= 3:
-        score += 25
-        reasons.append("🚨 Coordinated scam structure detected")
+    # 3. impersonation patterns
+    if "bank" in text or "irs" in text:
+        score += 20
+        reasons.append("Possible authority impersonation")
 
-    # =========================
-    # 🔗 LINK ANALYSIS
-    # =========================
+    # 4. link bait
     if "http" in text or "www" in text:
         score += 25
-        reasons.append("🔗 Phishing link detected")
+        reasons.append("Suspicious link detected")
 
-    # =========================
-    # 🔊 HUMAN BEHAVIOR MODEL
-    # =========================
+    # cap score
+    if score > 100:
+        score = 100
 
-    caps_ratio = sum(1 for c in message if c.isupper()) / max(len(message), 1)
-
-    if caps_ratio > 0.5 and len(message) > 20:
-        score += 20
-        reasons.append("📢 Aggressive communication pattern")
-
-    if "!!" in message:
-        score += 10
-        reasons.append("❗ Emotional pressure detected")
-
-    # =========================
-    # 🧬 ENTROPY / RANDOMNESS ANALYSIS
-    # =========================
-    unique_words = len(set(words))
-    word_count = len(words)
-
-    if word_count > 0:
-        entropy = unique_words / word_count
-
-        if entropy < 0.4:
-            score += 10
-            reasons.append("🧬 Repetitive / scripted message detected")
-
-    # =========================
-    # 💰 EXTREME MONEY REQUEST DETECTION
-    # =========================
-
-    if "all your money" in text:
-        score += 40
-        reasons.append("🚨 Direct asset theft pattern")
-
-    # =========================
-    # 🧮 FINAL NORMALIZATION
-    # =========================
-
-    score = min(100, score)
-
-    # =========================
-    # 🎯 LEVEL ENGINE
-    # =========================
-
-    if score >= 85:
-        level = "🚨 CRITICAL THREAT"
-    elif score >= 65:
-        level = "🔴 HIGH RISK"
-    elif score >= 40:
-        level = "🟠 MEDIUM RISK"
-    elif score >= 15:
-        level = "🟡 LOW RISK"
+    # level
+    if score < 30:
+        level = "SAFE"
+    elif score < 60:
+        level = "SUSPICIOUS"
     else:
-        level = "🟢 SAFE"
-
-    # =========================
-    # 📊 CONFIDENCE MODEL
-    # =========================
-    confidence = min(100, score + (len(archetype_hits) * 5))
-
-    # =========================
-    # 🧾 FINAL OUTPUT
-    # =========================
-
-    explanation = " | ".join(reasons) if reasons else "No suspicious patterns found"
+        level = "SCAM"
 
     return {
         "score": score,
         "level": level,
-        "confidence": confidence,
-        "archetypes": list(archetype_hits.keys()),
-        "explanation": explanation
+        "reasons": reasons
     }
+🚀 STEP 2 — Update dashboard display (IMPORTANT)
+
+In your dashboard.html, where you show results, add:
+
+{% if result %}
+<div style="margin-top:20px; text-align:left;">
+
+    <h3>🧠 AI Analysis</h3>
+
+    <p><b>Score:</b> {{ result.score }}/100</p>
+    <p><b>Level:</b> {{ result.level }}</p>
+
+    <ul>
+        {% for r in result.reasons %}
+            <li>{{ r }}</li>
+        {% endfor %}
+    </ul>
+
+</div>
+{% endif %}
