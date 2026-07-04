@@ -29,6 +29,9 @@ def home():
 # ---------------- SIGNUP ----------------
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+
+    error = None
+
     if request.method == "POST":
 
         username = request.form["username"]
@@ -37,13 +40,14 @@ def signup():
         existing = User.query.filter_by(username=username).first()
 
         if existing:
-            return "Username already exists."
+            error = "Username already exists."
+            return render_template("signup.html", error=error)
 
-        hashed = generate_password_hash(password)
+        hashed_password = generate_password_hash(password)
 
         user = User(
             username=username,
-            password=hashed
+            password=hashed_password
         )
 
         db.session.add(user)
@@ -51,11 +55,13 @@ def signup():
 
         return redirect("/login")
 
-    return render_template("signup.html")
+    return render_template("signup.html", error=error)
 
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
+    error = None
 
     if request.method == "POST":
 
@@ -68,15 +74,17 @@ def login():
             login_user(user)
             return redirect("/dashboard")
 
-        return "Invalid username or password."
+        error = "Invalid username or password."
 
-    return render_template("login.html")
+    return render_template("login.html", error=error)
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 @login_required
 def logout():
+
     logout_user()
+
     return redirect("/login")
 
 # ---------------- DASHBOARD ----------------
