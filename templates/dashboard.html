@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +9,9 @@
 
 <style>
 
-/* BASE */
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     background: #313338;
     color: white;
     display: flex;
@@ -20,36 +20,47 @@ body {
     height: 100vh;
 }
 
-/* CARD */
 .card {
     background: #2b2d31;
     padding: 40px;
     border-radius: 14px;
-    width: 500px;
+    width: 520px;
     text-align: center;
-    box-shadow: 0 25px 60px rgba(0,0,0,.5);
 }
 
-/* BUTTONS */
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #1e1f22;
+    color: white;
+}
+
 button {
-    padding: 12px 18px;
-    margin: 10px;
+    margin-top: 10px;
+    padding: 12px;
     border: none;
     border-radius: 8px;
     background: #5865f2;
     color: white;
     font-weight: bold;
     cursor: pointer;
+    width: 100%;
 }
 
 button:hover {
     background: #4752c4;
 }
 
-/* STATUS */
 #status {
-    margin-top: 15px;
+    margin-top: 10px;
     color: #b5bac1;
+}
+
+.section {
+    margin-bottom: 20px;
 }
 
 </style>
@@ -61,23 +72,44 @@ button:hover {
 <div class="card">
 
     <h1>🛡 ScamShield AI</h1>
+    <p>Text + Voice Scam Detector</p>
 
-    <p>Voice Scam Detector</p>
+    <!-- TEXT INPUT -->
+    <form method="POST">
 
-    <!-- MIC BUTTONS -->
-    <button onclick="startRecording()">🎤 Start Recording</button>
-    <button onclick="stopRecording()">⏹ Stop Recording</button>
+        <div class="section">
 
-    <p id="status">Ready</p>
+            <h3>✍️ Text Scan</h3>
 
-    <!-- FORM TO SEND AUDIO TO FLASK -->
-    <form id="audioForm" method="POST" enctype="multipart/form-data">
+            <textarea name="message" placeholder="Paste or type message..."></textarea>
 
-        <input type="file" name="audio" id="audioInput" hidden>
+            <button type="submit">Analyze Text</button>
 
-        <button type="submit">📤 Analyze Voice</button>
+        </div>
 
     </form>
+
+    <hr style="margin:20px 0; opacity:0.2;">
+
+    <!-- VOICE INPUT -->
+    <div class="section">
+
+        <h3>🎤 Voice Scan</h3>
+
+        <button onclick="startRecording()">Start Mic</button>
+        <button onclick="stopRecording()">Stop</button>
+
+        <p id="status">Ready</p>
+
+        <form method="POST" enctype="multipart/form-data" id="audioForm">
+
+            <input type="file" name="audio" id="audioInput" hidden>
+
+            <button type="submit">Analyze Voice</button>
+
+        </form>
+
+    </div>
 
 </div>
 
@@ -86,7 +118,7 @@ button:hover {
 let mediaRecorder;
 let audioChunks = [];
 
-/* START RECORDING */
+/* START MIC */
 function startRecording(){
 
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -104,16 +136,16 @@ function startRecording(){
 
         mediaRecorder.onstop = () => {
 
-            const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+            const blob = new Blob(audioChunks, { type: "audio/wav" });
 
-            const file = new File([audioBlob], "voice.wav");
+            const file = new File([blob], "voice.wav");
 
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
 
             document.getElementById("audioInput").files = dataTransfer.files;
 
-            document.getElementById("status").innerText = "✅ Recording ready";
+            document.getElementById("status").innerText = "✅ Ready";
 
             audioChunks = [];
         };
@@ -122,14 +154,10 @@ function startRecording(){
 
 }
 
-/* STOP RECORDING */
+/* STOP MIC */
 function stopRecording(){
-
-    if(mediaRecorder){
-        mediaRecorder.stop();
-        document.getElementById("status").innerText = "⏹ Stopped";
-    }
-
+    mediaRecorder.stop();
+    document.getElementById("status").innerText = "⏹ Stopped";
 }
 
 </script>
