@@ -96,6 +96,9 @@ def dashboard():
 
     if request.method == "POST":
 
+        # ⚡ DEBUG LINE (THIS IS WHAT WE TEST)
+        print(request.form, request.files)
+
         msg = request.form["message"]
 
         result = analyze_message(msg)

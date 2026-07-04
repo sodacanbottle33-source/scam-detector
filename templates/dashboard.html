@@ -1,100 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ScamShield AI Dashboard</title>
+
+<style>
+
+body{
+    margin:0;
+    padding:0;
+    background:#313338;
+    font-family:Arial, sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+/* MAIN CARD */
+.card{
+    width:420px;
+    max-width:90%;
+    background:#2b2d31;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);
+    color:white;
+}
+
+/* TITLE */
+h2{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+/* SUB TEXT */
+.subtitle{
+    text-align:center;
+    color:#b5bac1;
+    font-size:14px;
+    margin-bottom:20px;
+}
+
+/* INPUT */
+input{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    margin-bottom:10px;
+    background:#1e1f22;
+    color:white;
+    box-sizing:border-box;
+}
+
+/* BUTTON */
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#5865F2;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#4752c4;
+}
+
+/* RESULT BOX */
+.result{
+    margin-top:15px;
+    padding:12px;
+    background:#1e1f22;
+    border-radius:10px;
+}
+
+.result ul{
+    padding-left:18px;
+    margin:0;
+}
+
+</style>
+
+</head>
+
+<body>
+
 <div class="card">
 
-    <h1>🛡 ScamShield AI</h1>
-    <p>Text + Voice Scam Detector</p>
+    <h2>🛡 ScamShield AI</h2>
 
-    <!-- TEXT SCAN -->
+    <p class="subtitle">
+        Real-time AI scam detection powered by behavioral risk analysis.
+    </p>
+
+    <!-- INPUT FORM -->
     <form method="POST">
 
-        <div class="section">
+        <input name="message" placeholder="Type message to analyze">
 
-            <h3>✍️ Text Scan</h3>
-
-            <textarea name="message" placeholder="Type or paste message..." required></textarea>
-
-            <button type="submit">Analyze Text</button>
-
-        </div>
+        <button type="submit">Analyze Message</button>
 
     </form>
 
-    <hr>
+    <!-- AI RESULT -->
+    {% if result %}
 
-    <!-- VOICE SCAN -->
-    <div class="section">
+    <div class="result">
 
-        <h3>🎤 Voice Scan</h3>
+        <h3>🧠 AI Threat Analysis Report</h3>
 
-        <button onclick="startRecording()">Start Recording</button>
-        <button onclick="stopRecording()">Stop Recording</button>
+        <p><b>Risk Score:</b> {{ result.score }}/100</p>
 
-        <p id="status">Ready</p>
+        <p><b>Classification:</b> {{ result.level }}</p>
 
-        <!-- ⚡ IMPORTANT FIX: action="/dashboard" -->
-        <form method="POST" enctype="multipart/form-data" action="/dashboard">
+        {% if result.reasons %}
+        <p><b>Detected Signals:</b></p>
 
-            <input type="file" name="audio" id="audioInput" hidden>
-
-            <button type="submit">Analyze Voice</button>
-
-        </form>
+        <ul>
+            {% for r in result.reasons %}
+                <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
 
     </div>
 
+    {% endif %}
+
 </div>
-
-<script>
-
-let mediaRecorder;
-let audioChunks = [];
-
-/* START MIC */
-function startRecording(){
-
-    navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(stream => {
-
-        mediaRecorder = new MediaRecorder(stream);
-
-        mediaRecorder.start();
-
-        document.getElementById("status").innerText = "🎤 Recording...";
-
-        mediaRecorder.ondataavailable = e => {
-            audioChunks.push(e.data);
-        };
-
-        mediaRecorder.onstop = () => {
-
-            const blob = new Blob(audioChunks, { type: "audio/wav" });
-
-            const file = new File([blob], "voice.wav");
-
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-
-            document.getElementById("audioInput").files = dataTransfer.files;
-
-            document.getElementById("status").innerText = "✅ Ready to send";
-
-            audioChunks = [];
-        };
-
-    });
-
-}
-
-/* STOP MIC */
-function stopRecording(){
-
-    if(mediaRecorder){
-        mediaRecorder.stop();
-        document.getElementById("status").innerText = "⏹ Stopped";
-    }
-
-}
-
-</script>
 
 </body>
 </html>
