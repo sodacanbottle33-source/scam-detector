@@ -1,4 +1,6 @@
 Flask
-Flask-Login
-Flask-SQLAlchemy
+flask-login
+flask-sqlalchemy
 gunicorn
+scikit-learn
+joblib
