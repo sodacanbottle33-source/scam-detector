@@ -1,6 +1,7 @@
 Flask
 flask-login
 flask-sqlalchemy
+werkzeug
 gunicorn
-scikit-learn
-joblib
+SpeechRecognition
+pydub
