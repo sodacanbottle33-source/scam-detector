@@ -4,10 +4,11 @@ flask-sqlalchemy
 flask-wtf
 werkzeug
 requests
-opencv-python
+opencv-python-headless
 pillow
 transformers
 torch
 torchaudio
 soundfile
 gunicorn
+yt-dlp
