@@ -1,265 +1,132 @@
 import gc
-import os
-import subprocess
-import tempfile
 
-MODEL_NAME = "Gustking/wav2vec2-large-xlsr-deepfake-audio-classification"
-
-_feature_extractor = None
-_model = None
-_device = "cpu"
+MODEL_NAME = "prithivMLmods/Deep-Fake-Detector-v2-Model"
 
 
-def _load_model():
-    global _feature_extractor, _model, _device
-
-    import torch
-    from transformers import (
-        AutoFeatureExtractor,
-        AutoModelForAudioClassification,
-    )
-
-    if _model is None:
-        _device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        print("Loading AI voice detector on demand...")
-
-        _feature_extractor = AutoFeatureExtractor.from_pretrained(
-            MODEL_NAME
-        )
-
-        _model = AutoModelForAudioClassification.from_pretrained(
-            MODEL_NAME
-        )
-
-        _model.to(_device)
-        _model.eval()
-
-        print("AI voice detector loaded.")
-        print("Running on:", _device)
-        print("Labels:", _model.config.id2label)
-
-
-def get_sample_rate():
-    sample_rate = getattr(
-        _feature_extractor,
-        "sampling_rate",
-        None,
-    )
-
-    return int(sample_rate or 16000)
-
-
-def convert_to_wav(input_path, target_sample_rate):
-    if not input_path:
-        raise ValueError("Audio path is missing.")
-
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(
-            f"Audio file not found: {input_path}"
-        )
-
-    temporary_file = tempfile.NamedTemporaryFile(
-        suffix=".wav",
-        delete=False,
-    )
-
-    wav_path = temporary_file.name
-    temporary_file.close()
-
-    command = [
-        "ffmpeg",
-        "-y",
-        "-i",
-        input_path,
-        "-vn",
-        "-ac",
-        "1",
-        "-ar",
-        str(target_sample_rate),
-        "-c:a",
-        "pcm_s16le",
-        wav_path,
-    ]
-
-    completed = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if completed.returncode != 0:
-        if os.path.exists(wav_path):
-            os.remove(wav_path)
-
-        details = completed.stderr.strip()
-
-        raise RuntimeError(
-            "FFmpeg conversion failed: "
-            + (
-                details[-700:]
-                if details
-                else "unknown error"
-            )
-        )
-
-    if (
-        not os.path.exists(wav_path)
-        or os.path.getsize(wav_path) == 0
-    ):
-        raise RuntimeError(
-            "FFmpeg produced an empty WAV file."
-        )
-
-    return wav_path
-
-
-def detect_ai_voice(audio_path):
-    wav_path = None
+def detect_ai_video(video_path, frame_count=10):
+    detector = None
+    capture = None
 
     try:
-        import soundfile as sf
-        import torch
-        import torchaudio
+        import cv2
+        from PIL import Image
+        from transformers import pipeline
 
-        _load_model()
+        print("Loading AI video detector on demand...")
 
-        target_sample_rate = get_sample_rate()
-
-        wav_path = convert_to_wav(
-            audio_path,
-            target_sample_rate,
+        detector = pipeline(
+            "image-classification",
+            model=MODEL_NAME,
+            device=-1,
         )
 
-        audio_data, sample_rate = sf.read(
-            wav_path,
-            dtype="float32",
-            always_2d=False,
+        capture = cv2.VideoCapture(video_path)
+
+        if not capture.isOpened():
+            return {
+                "is_likely_ai": None,
+                "error": "Could not open the video.",
+            }
+
+        total_frames = int(
+            capture.get(cv2.CAP_PROP_FRAME_COUNT)
         )
 
-        if audio_data is None or audio_data.size == 0:
-            raise ValueError(
-                "The converted recording has no readable audio."
+        if total_frames <= 0:
+            return {
+                "is_likely_ai": None,
+                "error": "The video has no readable frames.",
+            }
+
+        step = max(total_frames // frame_count, 1)
+
+        ai_scores = []
+        analyzed_frames = 0
+
+        for frame_number in range(0, total_frames, step):
+            capture.set(
+                cv2.CAP_PROP_POS_FRAMES,
+                frame_number,
             )
 
-        if audio_data.ndim > 1:
-            audio_data = audio_data.mean(axis=1)
+            success, frame = capture.read()
 
-        waveform = torch.from_numpy(
-            audio_data
-        ).unsqueeze(0)
+            if not success:
+                continue
 
-        duration = waveform.shape[1] / sample_rate
+            frame_rgb = cv2.cvtColor(
+                frame,
+                cv2.COLOR_BGR2RGB,
+            )
 
-        if duration < 2:
+            image = Image.fromarray(frame_rgb)
+            predictions = detector(image)
+
+            frame_score = None
+
+            for prediction in predictions:
+                label = str(
+                    prediction["label"]
+                ).lower()
+
+                score = float(
+                    prediction["score"]
+                )
+
+                if (
+                    "deepfake" in label
+                    or "fake" in label
+                ):
+                    frame_score = score
+                    break
+
+                if (
+                    "real" in label
+                    or "realism" in label
+                ):
+                    frame_score = 1 - score
+                    break
+
+            if frame_score is not None:
+                ai_scores.append(frame_score)
+
+            analyzed_frames += 1
+
+            if analyzed_frames >= frame_count:
+                break
+
+        if not ai_scores:
             return {
                 "is_likely_ai": None,
                 "error": (
-                    "Recording too short. "
-                    "Record at least 2 seconds."
+                    "The model could not classify "
+                    "the video frames."
                 ),
             }
 
-        if duration > 20:
-            waveform = waveform[
-                :,
-                : 20 * sample_rate,
-            ]
-            duration = 20
-
-        if sample_rate != target_sample_rate:
-            waveform = torchaudio.functional.resample(
-                waveform,
-                sample_rate,
-                target_sample_rate,
-            )
-
-        audio_array = (
-            waveform
-            .squeeze(0)
-            .cpu()
-            .numpy()
+        average_ai_score = (
+            sum(ai_scores) / len(ai_scores)
         )
 
-        inputs = _feature_extractor(
-            audio_array,
-            sampling_rate=target_sample_rate,
-            return_tensors="pt",
+        ai_confidence = round(
+            average_ai_score * 100,
+            2,
         )
 
-        inputs = {
-            key: value.to(_device)
-            for key, value in inputs.items()
-        }
-
-        with torch.no_grad():
-            logits = _model(**inputs).logits
-
-            probabilities = (
-                torch
-                .softmax(logits, dim=-1)[0]
-                .cpu()
-            )
-
-        labels = _model.config.id2label
-
-        scores = {
-            str(labels[index]): round(
-                float(probabilities[index]),
-                4,
-            )
-            for index in range(len(probabilities))
-        }
-
-        fake_keywords = (
-            "fake",
-            "spoof",
-            "synthetic",
-            "ai",
-            "deepfake",
-        )
-
-        matches = [
-            probability
-            for label, probability in scores.items()
-            if any(
-                keyword in label.lower()
-                for keyword in fake_keywords
-            )
-        ]
-
-        if not matches:
-            return {
-                "is_likely_ai": None,
-                "error": (
-                    "The model labels could not "
-                    "be interpreted."
-                ),
-                "raw_scores": scores,
-            }
-
-        ai_probability = max(matches)
-
-        if ai_probability >= 0.85:
+        if average_ai_score >= 0.85:
             verdict = "Very Likely AI"
-        elif ai_probability >= 0.65:
+        elif average_ai_score >= 0.65:
             verdict = "Likely AI"
-        elif ai_probability >= 0.40:
+        elif average_ai_score >= 0.40:
             verdict = "Uncertain"
         else:
-            verdict = "Likely Human"
+            verdict = "Likely Real"
 
         return {
             "verdict": verdict,
-            "is_likely_ai": ai_probability > 0.5,
-            "ai_confidence": round(
-                ai_probability * 100,
-                2,
-            ),
-            "duration": round(duration, 2),
-            "sample_rate": target_sample_rate,
-            "raw_scores": scores,
+            "is_likely_ai": average_ai_score > 0.5,
+            "ai_confidence": ai_confidence,
+            "frames_analyzed": analyzed_frames,
         }
 
     except Exception as error:
@@ -271,14 +138,15 @@ def detect_ai_voice(audio_path):
         }
 
     finally:
-        if wav_path and os.path.exists(wav_path):
+        if capture is not None:
             try:
-                os.remove(wav_path)
-            except OSError:
+                capture.release()
+            except Exception:
                 pass
 
+        detector = None
         gc.collect()
 
 
 if __name__ == "__main__":
-    print("AI Voice Detector Ready")
+    print("AI Video Detector Ready")
