@@ -7,8 +7,6 @@ requests
 opencv-python-headless
 pillow
 transformers
-torch
-torchaudio
 soundfile
 gunicorn
 yt-dlp
