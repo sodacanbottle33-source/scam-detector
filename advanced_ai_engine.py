@@ -1,13 +1,27 @@
 import re
-from transformers import pipeline
 
-print("Loading advanced scam detector...")
+MODEL_NAME = "ProtectAI/deberta-v3-base-prompt-injection-v2"
 
-ai_model = pipeline(
-    "text-classification",
-    model="ProtectAI/deberta-v3-base-prompt-injection-v2",
-    truncation=True
-)
+_ai_model = None
+
+
+def _load_ai_model():
+    global _ai_model
+
+    if _ai_model is None:
+        from transformers import pipeline
+
+        print("Loading advanced scam detector on demand...")
+
+        _ai_model = pipeline(
+            "text-classification",
+            model=MODEL_NAME,
+            truncation=True,
+            device=-1,
+        )
+
+    return _ai_model
+
 
 def rule_score(text):
     text_lower = text.lower()
@@ -16,33 +30,67 @@ def rule_score(text):
 
     scam_patterns = {
         "Urgency": [
-            "urgent", "act now", "immediately", "last chance",
-            "final warning", "within 24 hours", "account will be closed"
+            "urgent",
+            "act now",
+            "immediately",
+            "last chance",
+            "final warning",
+            "within 24 hours",
+            "account will be closed",
         ],
         "Banking": [
-            "bank account", "account locked", "verify your account",
-            "unauthorized transaction", "security alert", "payment failed"
+            "bank account",
+            "account locked",
+            "verify your account",
+            "unauthorized transaction",
+            "security alert",
+            "payment failed",
         ],
         "Money": [
-            "send money", "wire transfer", "gift card", "bitcoin",
-            "crypto", "refund fee", "processing fee", "cash app", "paypal"
+            "send money",
+            "wire transfer",
+            "gift card",
+            "bitcoin",
+            "crypto",
+            "refund fee",
+            "processing fee",
+            "cash app",
+            "paypal",
         ],
         "Phishing": [
-            "click here", "verify here", "login now", "reset password",
-            "confirm your identity", "update payment"
+            "click here",
+            "verify here",
+            "login now",
+            "reset password",
+            "confirm your identity",
+            "update payment",
         ],
         "Impersonation": [
-            "irs", "government", "police", "microsoft support",
-            "amazon support", "paypal support", "bank security"
+            "irs",
+            "government",
+            "police",
+            "microsoft support",
+            "amazon support",
+            "paypal support",
+            "bank security",
         ],
         "Prize": [
-            "you won", "claim your prize", "winner", "lottery",
-            "free iphone", "cash reward", "congratulations"
+            "you won",
+            "claim your prize",
+            "winner",
+            "lottery",
+            "free iphone",
+            "cash reward",
+            "congratulations",
         ],
         "Family Scam": [
-            "lost my phone", "new number", "don't tell anyone",
-            "i need money", "emergency", "can you send"
-        ]
+            "lost my phone",
+            "new number",
+            "don't tell anyone",
+            "i need money",
+            "emergency",
+            "can you send",
+        ],
     }
 
     for category, phrases in scam_patterns.items():
@@ -71,14 +119,19 @@ def rule_score(text):
 
 
 def analyze_message(text):
+    rules, rule_reasons = rule_score(text)
+
     try:
-        rules, rule_reasons = rule_score(text)
-
+        ai_model = _load_ai_model()
         ai_result = ai_model(text)[0]
-        ai_confidence = int(ai_result["score"] * 100)
-        ai_label = ai_result["label"]
 
-        final_score = int((rules * 0.75) + (ai_confidence * 0.25))
+        ai_confidence = int(float(ai_result["score"]) * 100)
+        ai_label = str(ai_result["label"])
+
+        final_score = int(
+            (rules * 0.75)
+            + (ai_confidence * 0.25)
+        )
 
         if final_score >= 70:
             level = "SCAM"
@@ -87,8 +140,7 @@ def analyze_message(text):
         else:
             level = "SAFE"
 
-        reasons = rule_reasons[:]
-
+        reasons = list(rule_reasons)
         reasons.append(f"AI model label: {ai_label}")
         reasons.append(f"AI confidence: {ai_confidence}%")
         reasons.append(f"Rule score: {rules}/100")
@@ -99,23 +151,33 @@ def analyze_message(text):
         return {
             "score": final_score,
             "level": level,
-            "reasons": reasons
+            "reasons": reasons,
         }
 
-    except Exception as e:
-        fallback_score, fallback_reasons = rule_score(text)
-
-        if fallback_score >= 70:
+    except Exception as error:
+        if rules >= 70:
             level = "SCAM"
-        elif fallback_score >= 40:
+        elif rules >= 40:
             level = "SUSPICIOUS"
         else:
             level = "SAFE"
 
-        fallback_reasons.append(f"AI model failed, used rule engine: {str(e)}")
+        fallback_reasons = list(rule_reasons)
+        fallback_reasons.append(
+            f"AI model unavailable, used rule engine: {error}"
+        )
+
+        if not rule_reasons:
+            fallback_reasons.append(
+                "No strong scam signals found."
+            )
 
         return {
-            "score": fallback_score,
+            "score": rules,
             "level": level,
-            "reasons": fallback_reasons
+            "reasons": fallback_reasons,
         }
+
+
+if __name__ == "__main__":
+    print("Advanced scam detector ready.")
