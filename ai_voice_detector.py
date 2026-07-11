@@ -126,6 +126,7 @@ def detect_ai_voice(audio_path):
         _load_model()
 
         target_sample_rate = get_sample_rate()
+
         wav_path = convert_to_wav(
             audio_path,
             target_sample_rate,
