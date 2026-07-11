@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Scam Detector</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <style>
+        body{
+            margin:0;
+            height:100vh;
+            font-family:Arial;
+            background:linear-gradient(135deg,#0f172a,#1e293b);
+            color:white;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        }
+
+        .container{
+            background:rgba(255,255,255,0.06);
+            padding:30px;
+            border-radius:18px;
+            text-align:center;
+            width:420px;
+            backdrop-filter:blur(12px);
+            box-shadow:0 0 30px rgba(0,0,0,.35);
+        }
+
+        input{
+            width:85%;
+            padding:12px;
+            border:none;
+            border-radius:10px;
+            margin-top:10px;
+        }
+
+        button{
+            padding:12px 18px;
+            border:none;
+            border-radius:10px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
+            margin:6px;
+            font-weight:bold;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+        }
+
+        button:disabled{
+            background:#64748b;
+            cursor:not-allowed;
+        }
+
+        .history{
+            position:absolute;
+            top:20px;
+            right:20px;
+            width:260px;
+            background:rgba(255,255,255,0.06);
+            padding:15px;
+            border-radius:12px;
+            font-size:12px;
+            max-height:420px;
+            overflow-y:auto;
+        }
+
+        .item{
+            border-bottom:1px solid rgba(255,255,255,.15);
+            padding:8px 0;
+        }
+
+        #result{
+            margin-top:15px;
+            font-weight:bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="history">
+    <h3>📜 History</h3>
+
+    {% for scan in scans %}
+    <div class="item">
+        <b>{{ scan.level }}</b><br>
+        {{ scan.message }}<br>
+        Score: {{ scan.score }}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="container">
+
+    <h2>🧠 AI Scam Detector</h2>
+
+    <form method="POST" action="/dashboard">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="message" placeholder="Enter message...">
+        <br>
+        <button type="submit">Analyze Text</button>
+    </form>
+
+    <div id="result">
+        {% if result %}
+            <p>🧠 Level: {{ result.level }}</p>
+            <p>📊 Score: {{ result.score }}</p>
+            {% for r in result.reasons %}
+                <p>⚠ {{ r }}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <hr>
+
+    <button type="button" id="start">🎤 Start Recording</button>
+    <button type="button" id="stop" disabled>⛔ Stop</button>
+
+    <p id="status">Not recording</p>
+
+</div>
+
+<script>
+let recorder = null;
+let chunks = [];
+let stream = null;
+
+const startBtn = document.getElementById("start");
+const stopBtn = document.getElementById("stop");
+const statusText = document.getElementById("status");
+const resultBox = document.getElementById("result");
+const csrfToken = document.querySelector("meta[name='csrf-token']").content;
+
+startBtn.onclick = async function(){
+
+    try{
+
+        stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+
+        recorder = new MediaRecorder(stream);
+        chunks = [];
+
+        recorder.ondataavailable = function(e){
+            chunks.push(e.data);
+        };
+
+        recorder.onstop = async function(){
+
+            statusText.innerText = "Processing...";
+
+            const blob = new Blob(chunks, { type:"audio/webm" });
+
+            const formData = new FormData();
+            formData.append("audio", blob, "voice.webm");
+
+            try{
+                const response = await fetch("/analyze_voice", {
+                    method:"POST",
+                    headers:{
+                        "X-CSRFToken": csrfToken
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if(data.error){
+                    resultBox.innerHTML = `<p>⚠ Error: ${data.error}</p>`;
+                }else{
+                    resultBox.innerHTML = `
+                        <h3>🎤 Voice Analysis</h3>
+                        <p><b>${data.verdict || "Voice analyzed"}</b></p>
+                        <p>📊 AI Confidence: ${data.ai_confidence}%</p>
+                        <p>⏱ Duration: ${data.duration || "unknown"}s</p>
+                    `;
+                }
+
+            }catch(err){
+                resultBox.innerHTML = `<p>⚠ Upload failed: ${err.message}</p>`;
+            }
+
+            if(stream){
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusText.innerText = "Not recording";
+        };
+
+        recorder.start();
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        statusText.innerText = "🎤 Recording...";
+
+    }catch(err){
+        resultBox.innerHTML = `<p>⚠ Microphone error: ${err.message}</p>`;
+    }
+};
+
+stopBtn.onclick = function(){
+
+    if(recorder && recorder.state === "recording"){
+        recorder.stop();
+        statusText.innerText = "Stopping...";
+    }
+
+};
+</script>
+
+</body>
+</html>

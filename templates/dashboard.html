@@ -1,140 +1,493 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>AI Scam Detector</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<title>ScamShield AI Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+        }
 
-<style>
+        .page {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 290px;
+            gap: 20px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
 
-body{
-    margin:0;
-    padding:0;
-    background:#313338;
-    font-family:Arial, sans-serif;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
+        .main {
+            display: flex;
+            justify-content: center;
+        }
 
-/* MAIN CARD */
-.card{
-    width:420px;
-    max-width:90%;
-    background:#2b2d31;
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 25px 60px rgba(0,0,0,.4);
-    color:white;
-}
+        .card {
+            width: min(720px, 100%);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        }
 
-/* TITLE */
-h2{
-    text-align:center;
-    margin-bottom:10px;
-}
+        .section {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.14);
+        }
 
-/* SUB TEXT */
-.subtitle{
-    text-align:center;
-    color:#b5bac1;
-    font-size:14px;
-    margin-bottom:20px;
-}
+        input[type="text"],
+        input[type="url"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 10px;
+            margin: 8px 0;
+            background: #f8fafc;
+        }
 
-/* INPUT */
-input{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    margin-bottom:10px;
-    background:#1e1f22;
-    color:white;
-    box-sizing:border-box;
-}
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+        }
 
-/* BUTTON */
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:#5865F2;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
+        button:hover {
+            background: #1d4ed8;
+        }
 
-button:hover{
-    background:#4752c4;
-}
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+        }
 
-/* RESULT BOX */
-.result{
-    margin-top:15px;
-    padding:12px;
-    background:#1e1f22;
-    border-radius:10px;
-}
+        .history {
+            width: 100%;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
 
-.result ul{
-    padding-left:18px;
-    margin:0;
-}
+        .item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 10px 0;
+        }
 
-</style>
+        #voiceResult,
+        #videoResult,
+        #textResult {
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.18);
+            border-radius: 12px;
+            padding: 14px;
+        }
 
+        .small {
+            color: #cbd5e1;
+            font-size: 13px;
+        }
+
+        audio,
+        video {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+
+            .history {
+                max-height: 300px;
+            }
+        }
+    </style>
 </head>
 
 <body>
+<div class="page">
+    <div class="main">
+        <div class="card">
+            <h2>🧠 AI Scam Detector</h2>
+            <p class="small">Text + AI voice + AI video</p>
 
-<div class="card">
+            <form method="POST" action="/dashboard">
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
 
-    <h2>🛡 ScamShield AI</h2>
+                <input
+                    type="text"
+                    name="message"
+                    placeholder="Enter suspicious text..."
+                >
 
-    <p class="subtitle">
-        Real-time AI scam detection powered by behavioral risk analysis.
-    </p>
+                <button type="submit">
+                    Analyze Text
+                </button>
+            </form>
 
-    <!-- INPUT FORM -->
-    <form method="POST">
+            {% if result %}
+            <div id="textResult">
+                <h3>{{ result.level }}</h3>
+                <p>Score: {{ result.score }}</p>
 
-        <input name="message" placeholder="Type message to analyze">
+                {% for reason in result.reasons %}
+                <p>⚠ {{ reason }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-        <button type="submit">Analyze Message</button>
+            <div class="section">
+                <h3>🎤 AI Voice Detector</h3>
 
-    </form>
+                <button type="button" id="start">
+                    Start Recording
+                </button>
 
-    <!-- AI RESULT -->
-    {% if result %}
+                <button type="button" id="stop" disabled>
+                    Stop
+                </button>
 
-    <div class="result">
+                <p id="status">Not recording</p>
+                <div id="voiceResult"></div>
+            </div>
 
-        <h3>🧠 AI Threat Analysis Report</h3>
+            <div class="section">
+                <h3>📹 AI Video Detector</h3>
 
-        <p><b>Risk Score:</b> {{ result.score }}/100</p>
+                <h4>Upload a file</h4>
 
-        <p><b>Classification:</b> {{ result.level }}</p>
+                <input
+                    id="videoInput"
+                    type="file"
+                    accept=".mp4,.webm,.mov,.avi,.mkv"
+                >
 
-        {% if result.reasons %}
-        <p><b>Detected Signals:</b></p>
+                <button
+                    type="button"
+                    id="analyzeVideoFile"
+                >
+                    Analyze Video File
+                </button>
 
-        <ul>
-            {% for r in result.reasons %}
-                <li>{{ r }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+                <h4>Or paste a direct video URL</h4>
 
+                <input
+                    id="videoUrl"
+                    type="url"
+                    placeholder="https://example.com/video.mp4"
+                >
+
+                <button
+                    type="button"
+                    id="analyzeVideoUrl"
+                >
+                    Analyze Video URL
+                </button>
+
+                <p class="small">
+                    URL mode supports direct public video-file links such as
+                    .mp4 or .webm. Normal YouTube, TikTok, and Instagram page
+                    links are not direct files.
+                </p>
+
+                <p id="videoStatus">
+                    No video selected.
+                </p>
+
+                <div id="videoResult"></div>
+            </div>
+        </div>
     </div>
 
-    {% endif %}
+    <aside class="history">
+        <h3>📜 History</h3>
 
+        {% for scan in scans %}
+        <div class="item">
+            <b>{{ scan.level }}</b><br>
+            {{ scan.message }}<br>
+            Score: {{ scan.score }}
+        </div>
+        {% endfor %}
+    </aside>
 </div>
 
+<script>
+const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .content;
+
+// ---------------- VOICE ----------------
+let recorder = null;
+let voiceChunks = [];
+let micStream = null;
+let timer = null;
+let seconds = 0;
+
+const startBtn = document.getElementById("start");
+const stopBtn = document.getElementById("stop");
+const statusText = document.getElementById("status");
+const voiceResult = document.getElementById("voiceResult");
+
+function setVoiceButtons(recording) {
+    startBtn.disabled = recording;
+    stopBtn.disabled = !recording;
+}
+
+function stopMic() {
+    if (micStream) {
+        micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+    }
+}
+
+function stopTimer() {
+    if (timer) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+setVoiceButtons(false);
+
+startBtn.addEventListener("click", async () => {
+    try {
+        voiceResult.innerHTML = "";
+        voiceChunks = [];
+
+        micStream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+        });
+
+        recorder = new MediaRecorder(micStream);
+
+        recorder.ondataavailable = event => {
+            if (event.data && event.data.size > 0) {
+                voiceChunks.push(event.data);
+            }
+        };
+
+        recorder.onstop = async () => {
+            stopTimer();
+            stopMic();
+
+            const blob = new Blob(voiceChunks, {
+                type: "audio/webm"
+            });
+
+            const audioUrl = URL.createObjectURL(blob);
+
+            voiceResult.innerHTML = `
+                <h3>🎧 Recording Preview</h3>
+                <audio controls src="${audioUrl}"></audio>
+                <p class="small">Uploading to AI detector...</p>
+            `;
+
+            const formData = new FormData();
+            formData.append("audio", blob, "voice.webm");
+
+            try {
+                const response = await fetch("/analyze_voice", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    voiceResult.innerHTML +=
+                        `<p>⚠ ${data.error || "Voice analysis failed."}</p>`;
+                    return;
+                }
+
+                voiceResult.innerHTML += `
+                    <h3>🎤 AI Voice Analysis</h3>
+                    <p><b>${data.verdict}</b></p>
+                    <p>AI Confidence: ${data.ai_confidence}%</p>
+                    <p>Duration: ${data.duration}s</p>
+                `;
+            } catch (error) {
+                voiceResult.innerHTML +=
+                    `<p>⚠ Upload failed: ${error.message}</p>`;
+            } finally {
+                statusText.innerText = "Done";
+                setVoiceButtons(false);
+            }
+        };
+
+        recorder.start();
+        setVoiceButtons(true);
+
+        seconds = 0;
+        statusText.innerText = "🎤 Recording... 0s";
+
+        timer = setInterval(() => {
+            seconds += 1;
+            statusText.innerText = `🎤 Recording... ${seconds}s`;
+        }, 1000);
+
+    } catch (error) {
+        stopTimer();
+        stopMic();
+        setVoiceButtons(false);
+
+        voiceResult.innerHTML =
+            `<p>⚠ Microphone error: ${error.message}</p>`;
+    }
+});
+
+stopBtn.addEventListener("click", () => {
+    if (recorder && recorder.state === "recording") {
+        statusText.innerText = "Stopping...";
+        recorder.stop();
+    }
+});
+
+// ---------------- VIDEO ----------------
+const videoInput = document.getElementById("videoInput");
+const videoUrlInput = document.getElementById("videoUrl");
+const analyzeVideoFileButton = document.getElementById("analyzeVideoFile");
+const analyzeVideoUrlButton = document.getElementById("analyzeVideoUrl");
+const videoStatus = document.getElementById("videoStatus");
+const videoResult = document.getElementById("videoResult");
+
+videoInput.addEventListener("change", () => {
+    const file = videoInput.files[0];
+
+    videoStatus.textContent = file
+        ? file.name
+        : "No video selected.";
+});
+
+function renderVideoResult(data) {
+    videoResult.innerHTML += `
+        <h3>🎥 AI Video Analysis</h3>
+        <p><b>${data.verdict || "Video analyzed"}</b></p>
+        <p>AI Confidence: ${data.ai_confidence}%</p>
+        <p>Frames analyzed: ${data.frames_analyzed}</p>
+        <p class="small">This is an estimate, not forensic proof.</p>
+    `;
+}
+
+analyzeVideoFileButton.addEventListener("click", async () => {
+    const file = videoInput.files[0];
+
+    if (!file) {
+        videoResult.innerHTML =
+            "<p>⚠ Select a video file first.</p>";
+        return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+
+    videoResult.innerHTML = `
+        <h3>🎬 Video Preview</h3>
+        <video controls src="${previewUrl}"></video>
+        <p>Uploading and analyzing...</p>
+    `;
+
+    const formData = new FormData();
+    formData.append("video", file);
+
+    analyzeVideoFileButton.disabled = true;
+
+    try {
+        const response = await fetch("/analyze_video", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            videoResult.innerHTML +=
+                `<p>⚠ ${data.error || "Video analysis failed."}</p>`;
+            return;
+        }
+
+        renderVideoResult(data);
+
+    } catch (error) {
+        videoResult.innerHTML +=
+            `<p>⚠ Upload failed: ${error.message}</p>`;
+    } finally {
+        analyzeVideoFileButton.disabled = false;
+    }
+});
+
+analyzeVideoUrlButton.addEventListener("click", async () => {
+    const url = videoUrlInput.value.trim();
+
+    if (!url) {
+        videoResult.innerHTML =
+            "<p>⚠ Paste a video URL first.</p>";
+        return;
+    }
+
+    videoResult.innerHTML =
+        "<p>Downloading and analyzing the URL...</p>";
+
+    analyzeVideoUrlButton.disabled = true;
+
+    try {
+        const response = await fetch("/analyze_video_url", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken
+            },
+            body: JSON.stringify({
+                url: url
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            videoResult.innerHTML =
+                `<p>⚠ ${data.error || "URL analysis failed."}</p>`;
+            return;
+        }
+
+        renderVideoResult(data);
+
+    } catch (error) {
+        videoResult.innerHTML =
+            `<p>⚠ URL request failed: ${error.message}</p>`;
+    } finally {
+        analyzeVideoUrlButton.disabled = false;
+    }
+});
+</script>
 </body>
 </html>

@@ -1,348 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>ScamShield AI - Create Account</title>
-
-<style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    background:#313338;
-    font-family:Arial, Helvetica, sans-serif;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    height:100vh;
-    overflow:hidden;
-}
-
-/* Background Glow */
-
-body::before{
-
-    content:"";
-
-    position:fixed;
-
-    width:650px;
-    height:650px;
-
-    background:#5865F2;
-
-    filter:blur(180px);
-
-    opacity:.16;
-
-    top:-220px;
-    left:-180px;
-
-}
-
-body::after{
-
-    content:"";
-
-    position:fixed;
-
-    width:550px;
-    height:550px;
-
-    background:#00A8FC;
-
-    filter:blur(180px);
-
-    opacity:.10;
-
-    bottom:-220px;
-    right:-180px;
-
-}
-
-/* Card */
-
-.card{
-
-    position:relative;
-
-    width:470px;
-
-    background:#2b2d31;
-
-    padding:40px;
-
-    border-radius:14px;
-
-    box-shadow:0 25px 60px rgba(0,0,0,.45);
-
-    z-index:5;
-
-}
-
-/* Logo */
-
-.logo{
-
-    font-size:62px;
-
-    text-align:center;
-
-    margin-bottom:14px;
-
-}
-
-/* Headings */
-
-h1{
-
-    color:white;
-
-    text-align:center;
-
-    margin-bottom:10px;
-
-    font-size:30px;
-
-}
-
-.subtitle{
-
-    text-align:center;
-
-    color:#b5bac1;
-
-    margin-bottom:35px;
-
-}
-
-/* Labels */
-
-label{
-
-    display:block;
-
-    margin-bottom:8px;
-
-    color:#b5bac1;
-
-    font-size:12px;
-
-    font-weight:bold;
-
-    letter-spacing:.6px;
-
-}
-
-/* Inputs */
-
-.input-group{
-
-    margin-bottom:18px;
-
-    position:relative;
-
-}
-
-input{
-
-    width:100%;
-
-    padding:14px;
-
-    background:#1e1f22;
-
-    border:1px solid transparent;
-
-    border-radius:8px;
-
-    color:white;
-
-    font-size:15px;
-
-    transition:.2s;
-
-}
-
-input:focus{
-
-    outline:none;
-
-    border-color:#5865F2;
-
-    box-shadow:0 0 0 3px rgba(88,101,242,.15);
-
-}
-
-/* Password eye */
-
-.toggle{
-
-    position:absolute;
-
-    right:14px;
-
-    top:44px;
-
-    cursor:pointer;
-
-    color:#b5bac1;
-
-    user-select:none;
-
-}
-
-.toggle:hover{
-
-    color:white;
-
-}
-
-/* Error */
-
-.error{
-
-    color:#ed4245;
-
-    font-size:13px;
-
-    margin-top:6px;
-
-    font-weight:bold;
-
-}
-
-/* Success */
-
-.success{
-
-    color:#57F287;
-
-    font-size:13px;
-
-    margin-top:6px;
-
-    font-weight:bold;
-
-}
-
-/* Password strength */
-
-.strength{
-
-    margin-top:6px;
-
-    font-size:13px;
-
-    font-weight:bold;
-
-}
-
-/* Button */
-
-button{
-
-    width:100%;
-
-    padding:14px;
-
-    background:#5865F2;
-
-    color:white;
-
-    border:none;
-
-    border-radius:8px;
-
-    font-size:15px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-
-    transition:.2s;
-
-}
-
-button:hover{
-
-    background:#4752C4;
-
-    transform:translateY(-2px);
-
-}
-
-/* Bottom */
-
-.bottom{
-
-    margin-top:28px;
-
-    text-align:center;
-
-    color:#b5bac1;
-
-}
-
-.bottom a{
-
-    color:#00A8FC;
-
-    text-decoration:none;
-
-    font-weight:bold;
-
-}
-
-.bottom a:hover{
-
-    text-decoration:underline;
-
-}
-</style>
-
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>ScamShield AI - Sign Up</title>
-
 <style>
-
-/* RESET */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
-/* BODY FIX (IMPORTANT) */
 body {
     background: #313338;
     font-family: Inter, Arial, Helvetica, sans-serif;
-
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-
     overflow: hidden;
 }
-
-/* BACKGROUND GLOW */
 body::before {
     content: "";
     position: fixed;
@@ -354,7 +30,6 @@ body::before {
     top: -220px;
     left: -180px;
 }
-
 body::after {
     content: "";
     position: fixed;
@@ -366,8 +41,6 @@ body::after {
     bottom: -220px;
     right: -180px;
 }
-
-/* CARD FIX */
 .card {
     width: 470px;
     background: #2b2d31;
@@ -376,28 +49,21 @@ body::after {
     box-shadow: 0 25px 60px rgba(0,0,0,.45);
     z-index: 5;
 }
-
-/* LOGO */
 .logo {
     font-size: 62px;
     text-align: center;
     margin-bottom: 14px;
 }
-
-/* TEXT */
 h1 {
     color: white;
     text-align: center;
     margin-bottom: 10px;
 }
-
 .subtitle {
     text-align: center;
     color: #b5bac1;
     margin-bottom: 30px;
 }
-
-/* LABELS */
 label {
     display: block;
     margin-bottom: 8px;
@@ -405,13 +71,10 @@ label {
     font-size: 12px;
     font-weight: bold;
 }
-
-/* INPUTS */
 .input-group {
     margin-bottom: 18px;
     position: relative;
 }
-
 input {
     width: 100%;
     padding: 14px;
@@ -420,13 +83,10 @@ input {
     border-radius: 8px;
     color: white;
 }
-
 input:focus {
     outline: none;
     border-color: #5865F2;
 }
-
-/* EYE ICON */
 .toggle {
     position: absolute;
     right: 14px;
@@ -434,16 +94,12 @@ input:focus {
     cursor: pointer;
     color: #b5bac1;
 }
-
-/* ERROR */
 .error {
     color: #ed4245;
     font-size: 13px;
     margin-top: 6px;
     font-weight: bold;
 }
-
-/* BUTTON */
 button {
     width: 100%;
     padding: 14px;
@@ -454,74 +110,53 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
-
 button:hover {
     background: #4752C4;
 }
-
-/* BOTTOM */
 .bottom {
     margin-top: 28px;
     text-align: center;
     color: #b5bac1;
 }
-
 .bottom a {
     color: #00A8FC;
     text-decoration: none;
 }
-
 </style>
-
 </head>
-
 <body>
-
 <div class="card">
-
     <div class="logo">🛡️</div>
-
     <h1>Create Account</h1>
-
     <p class="subtitle">Join ScamShield AI and stay protected.</p>
-
     {% if error %}
     <div class="error">{{ error }}</div>
     {% endif %}
-
     <form method="POST">
-
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="input-group">
             <input type="text" name="username" placeholder="Username" required>
         </div>
-
         <div class="input-group">
             <input type="password" name="password" id="password" placeholder="Password" required>
             <span class="toggle" onclick="toggle('password')">👁</span>
         </div>
-
         <div class="input-group">
             <input type="password" name="confirm_password" id="confirm" placeholder="Confirm Password" required>
             <span class="toggle" onclick="toggle('confirm')">👁</span>
         </div>
-
         <button type="submit">Create Account</button>
-
     </form>
-
     <div class="bottom">
         Already have an account? <br><br>
         <a href="/login">Login</a>
     </div>
-
 </div>
-
 <script>
 function toggle(id){
     const box = document.getElementById(id);
     box.type = box.type === "password" ? "text" : "password";
 }
 </script>
-
 </body>
 </html>

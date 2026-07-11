@@ -1,7 +1,12 @@
 Flask
 flask-login
 flask-sqlalchemy
+flask-wtf
 werkzeug
-gunicorn
-SpeechRecognition
-pydub
+requests
+opencv-python
+pillow
+transformers
+torch
+torchaudio
+soundfile

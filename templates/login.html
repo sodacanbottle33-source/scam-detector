@@ -1,35 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>ScamShield AI - Login</title>
-
 <style>
-
-/* RESET */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
-/* BODY */
 body {
     background: #313338;
     font-family: Inter, Arial, Helvetica, sans-serif;
-
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-
     overflow: hidden;
 }
-
-/* BACKGROUND GLOW */
 body::before {
     content: "";
     position: fixed;
@@ -41,7 +30,6 @@ body::before {
     top: -150px;
     left: -150px;
 }
-
 body::after {
     content: "";
     position: fixed;
@@ -53,8 +41,6 @@ body::after {
     bottom: -200px;
     right: -100px;
 }
-
-/* CARD */
 .card {
     width: 460px;
     background: #2b2d31;
@@ -63,35 +49,27 @@ body::after {
     box-shadow: 0 30px 60px rgba(0,0,0,.45);
     z-index: 2;
 }
-
-/* LOGO */
 .logo {
     font-size: 64px;
     text-align: center;
     margin-bottom: 18px;
 }
-
-/* TEXT */
 h1 {
     text-align: center;
     color: white;
     font-size: 30px;
     margin-bottom: 10px;
 }
-
 .subtitle {
     text-align: center;
     color: #b5bac1;
     font-size: 15px;
     margin-bottom: 30px;
 }
-
-/* INPUT */
 .input-group {
     margin-bottom: 18px;
     position: relative;
 }
-
 input {
     width: 100%;
     padding: 14px;
@@ -101,13 +79,10 @@ input {
     color: white;
     font-size: 15px;
 }
-
 input:focus {
     outline: none;
     border-color: #5865f2;
 }
-
-/* EYE */
 .toggle {
     position: absolute;
     right: 14px;
@@ -116,20 +91,15 @@ input:focus {
     color: #b5bac1;
     user-select: none;
 }
-
 .toggle:hover {
     color: white;
 }
-
-/* ERROR */
 .error {
     color: #ed4245;
     font-weight: bold;
     text-align: center;
     margin-bottom: 15px;
 }
-
-/* BUTTON */
 button {
     width: 100%;
     padding: 14px;
@@ -140,90 +110,63 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
-
 button:hover {
     background: #4752c4;
 }
-
-/* BOTTOM */
 .bottom {
     margin-top: 28px;
     text-align: center;
     color: #b5bac1;
 }
-
 .bottom a {
     color: #00a8fc;
     text-decoration: none;
 }
-
 </style>
-
 </head>
-
 <body>
-
 <div class="card">
-
     <div class="logo">🛡️</div>
-
     <h1>Welcome back</h1>
-
     <p class="subtitle">Sign in to ScamShield AI</p>
-
-    <!-- ERROR MESSAGE FROM FLASK -->
     {% if error %}
     <div class="error">
         {{ error }}
     </div>
     {% endif %}
-
     <form method="POST" id="loginForm">
-
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="input-group">
             <input type="text" name="username" placeholder="Username" required>
         </div>
-
         <div class="input-group">
-
             <input
                 id="password"
                 type="password"
                 name="password"
                 placeholder="Password"
                 required>
-
             <span class="toggle" onclick="toggle()">👁</span>
-
         </div>
-
         <button id="loginBtn" type="submit">
             Log In
         </button>
-
     </form>
-
     <div class="bottom">
         Need an account? <br><br>
         <a href="/signup">Create Account</a>
     </div>
-
 </div>
-
 <script>
-
 function toggle(){
     const box = document.getElementById("password");
     box.type = box.type === "password" ? "text" : "password";
 }
-
 document.getElementById("loginForm").addEventListener("submit", () => {
     const btn = document.getElementById("loginBtn");
     btn.innerHTML = "Logging in...";
     btn.disabled = true;
 });
-
 </script>
-
 </body>
 </html>

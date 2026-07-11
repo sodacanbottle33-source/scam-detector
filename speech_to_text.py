@@ -1,0 +1,28 @@
+import speech_recognition as sr
+
+
+def speech_to_text(audio_path):
+    recognizer = sr.Recognizer()
+
+    try:
+        with sr.AudioFile(audio_path) as source:
+            audio = recognizer.record(source)
+
+        text = recognizer.recognize_google(audio)
+
+        return {
+            "success": True,
+            "text": text
+        }
+
+    except sr.UnknownValueError:
+        return {
+            "success": False,
+            "text": ""
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "text": str(e)
+        }	
